@@ -119,24 +119,32 @@ print(gcf, 'R0_Contour_SelectedPairs_Lambda', '-dpng', '-r300');
 
 %% Function to Compute R0
 function R0 = computeR0_from_para(para, pi_val, soc, AgeMat0)
-    term1 = ((1 - pi_val) * para.rho) / para.gamma;
-    term2 = ((1 - pi_val) * (1 - para.rho)) ./ (para.delta + para.gamma);
-    term3 = (para.iota * pi_val) ./ (para.delta + para.gamma);
-    scalar_sum = term1 + term2 + term3;
+    %---------------------------------------------------------------
+    % Computes R0 using the next-generation matrix method
+    % with age- and decile-structured mixing
+    %---------------------------------------------------------------
 
+    % Vector of length = n_age (if gamma, delta are vectors)
+    term1 = ((1 - pi_val) * para.rho) ./ para.gamma;                    % (1-π)ρ/γ_i
+    term2 = ((1 - pi_val) * (1 - para.rho)) ./ (para.delta + para.gamma); % (1-π)(1-ρ)/(δ_i+γ_i)
+    term3 = (para.iota * pi_val) ./ (para.delta + para.gamma);            % ιπ/(δ_i+γ_i)
+
+    scalar_sum = term1 + term2 + term3;   % vector, length = n_age
+
+    % Build the full structured contact matrix Λ
     n_decile = size(soc, 1);
     n_age = size(AgeMat0, 1);
-    AS_0 = kron(soc, AgeMat0);
+    AS_0 = kron(soc, AgeMat0);   % (n_decile*n_age) × (n_decile*n_age)
 
-    riskgroups = zeros(n_decile, n_decile);
-    for i = 1:n_decile
-        for j = 1:n_decile
-            rows = ((i-1)*n_age + 1):(i*n_age);
-            cols = ((j-1)*n_age + 1):(j*n_age);
-            block = para.beta .* (AS_0(rows, cols) .* diag(scalar_sum));
-            riskgroups(i,j) = max(real(eig(block)));
-        end
-    end
+    % Expand scalar_sum across deciles (repeat for each decile)
+    scalar_vec = repmat(scalar_sum(:), n_decile, 1); % column vector length n_decile*n_age
 
-    R0 = max(eig(riskgroups));
+    % Build F as diagonal matrix of scaling terms
+    F_mat = diag(scalar_vec);
+
+    % Full next-generation matrix
+    K = para.beta * (AS_0 * F_mat);
+
+    % Spectral radius = R0
+    R0 = max(real(eig(K)));
 end
