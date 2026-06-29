@@ -127,9 +127,24 @@ colors = [
 
 compartments = {'S','E','A','J','I','H','R'};
 
-figure;
+%% Figure 1: Dynamics per Social Group (Summed Over Age Classes) — Publication Ready
+% Uses your 'colors' and 'compartments' variables
+
+fig1 = figure; clf;
+set(fig1, 'Units','inches', 'Position',[0.6 0.6 14 10]);  % big canvas
+t1 = tiledlayout(5, 2, 'Padding','compact', 'TileSpacing','compact');
+
+lw_curve = 3.0;   % line thickness
+lw_axes  = 1.6;   % axis spine thickness
+
+axList1 = gobjects(10,1);
+globalY1 = 0;
+
+% Pre-create legend handles (from the first tile)
+hLegend1 = gobjects(numel(compartments),1);
+
 for g = 1:10
-    % Extract and sum over age groups for each compartment
+    % Sum over age groups for each compartment
     S = sum(Classes.(['S' num2str(g)]), 2);
     E = sum(Classes.(['E' num2str(g)]), 2);
     A = sum(Classes.(['A' num2str(g)]), 2);
@@ -138,59 +153,133 @@ for g = 1:10
     H = sum(Classes.(['H' num2str(g)]), 2);
     R = sum(Classes.(['R' num2str(g)]), 2);
 
-    subplot(5,2,g)
-    plot(t, S, '-', 'LineWidth', 2.5, 'Color', colors(1,:)); hold on;
-    plot(t, E, '-', 'LineWidth', 2.5, 'Color', colors(2,:));
-    plot(t, A, '-', 'LineWidth', 2.5, 'Color', colors(3,:));
-    plot(t, J, '-', 'LineWidth', 2.5, 'Color', colors(4,:));
-    plot(t, I, '-', 'LineWidth', 2.5, 'Color', colors(5,:));
-    plot(t, H, '-', 'LineWidth', 2.5, 'Color', colors(6,:));
-    plot(t, R, '-', 'LineWidth', 2.5, 'Color', colors(7,:));
+    ax = nexttile(t1); axList1(g) = ax; hold(ax, 'on'); box(ax, 'on');
+    set(ax, 'LineWidth', lw_axes, 'TickDir','out', ...
+            'FontSize', 16, 'FontWeight','bold');
 
-    title(['Decile ' num2str(g)], 'FontWeight', 'bold');
-    xlabel('Time (days)', 'FontSize', 10);
-    ylabel('Population', 'FontSize', 10);
-    grid on;
-
+    % Plot lines (store handles in first tile for shared legend)
     if g == 1
-        legend(compartments, 'Location', 'northeastoutside');
+        hLegend1(1) = plot(t, S, '-', 'LineWidth', lw_curve, 'Color', colors(1,:));
+        hLegend1(2) = plot(t, E, '-', 'LineWidth', lw_curve, 'Color', colors(2,:));
+        hLegend1(3) = plot(t, A, '-', 'LineWidth', lw_curve, 'Color', colors(3,:));
+        hLegend1(4) = plot(t, J, '-', 'LineWidth', lw_curve, 'Color', colors(4,:));
+        hLegend1(5) = plot(t, I, '-', 'LineWidth', lw_curve, 'Color', colors(5,:));
+        hLegend1(6) = plot(t, H, '-', 'LineWidth', lw_curve, 'Color', colors(6,:));
+        hLegend1(7) = plot(t, R, '-', 'LineWidth', lw_curve, 'Color', colors(7,:));
+    else
+        plot(t, S, '-', 'LineWidth', lw_curve, 'Color', colors(1,:));
+        plot(t, E, '-', 'LineWidth', lw_curve, 'Color', colors(2,:));
+        plot(t, A, '-', 'LineWidth', lw_curve, 'Color', colors(3,:));
+        plot(t, J, '-', 'LineWidth', lw_curve, 'Color', colors(4,:));
+        plot(t, I, '-', 'LineWidth', lw_curve, 'Color', colors(5,:));
+        plot(t, H, '-', 'LineWidth', lw_curve, 'Color', colors(6,:));
+        plot(t, R, '-', 'LineWidth', lw_curve, 'Color', colors(7,:));
     end
+
+    title(ax, ['Decile ' num2str(g)], 'FontWeight','bold', 'FontSize', 18);
+    xlabel(ax, 'Time(days)', 'Interpreter','latex', 'FontSize', 22, 'FontWeight','bold');
+    ylabel(ax, 'Population',       'Interpreter','latex', 'FontSize', 22, 'FontWeight','bold');
+
+    grid(ax, 'on'); ax.MinorGridLineStyle = '-'; grid(ax,'minor');
+    set(ax, 'LooseInset', max(get(ax,'TightInset'), 0.02));
+
+    % Track global ymax for unified limits
+    localMax = max([S;E;A;J;I;H;R], [], 'all');
+    if ~isempty(localMax), globalY1 = max(globalY1, localMax); end
 end
 
-sgtitle('Dynamics per Social Group (Summed Over Age Classes)', 'FontSize', 14, 'FontWeight', 'bold');
+% Unified Y-limits across all tiles (+5% headroom)
+if globalY1 > 0
+    yMax1 = ceil(globalY1 * 1.05);
+    arrayfun(@(a) set(a, 'YLim', [0 yMax1]), axList1);
+end
+
+% Shared legend (boxed) for all tiles
+% Shared legend across all tiles (create from an axes, not the layout)
+lgd1 = legend(axList1(1), hLegend1, compartments, ...
+              'Interpreter','latex', 'Orientation','horizontal', ...
+              'NumColumns',4, 'Box','on');
+set(lgd1, 'FontSize', 20, 'EdgeColor','k', 'LineWidth', 2.5);
+lgd1.Layout.Tile = 'south';   % place below the tiled layout
+
+% Main title
+sgtitle(t1, 'Dynamics per Social Group (Summed Over Age Classes)', ...
+        'Interpreter','latex', 'FontSize', 26, 'FontWeight','bold');
+
+% Borderless, sharp export
+exportgraphics(fig1, 'dynamics_per_social_group.png', ...
+               'Resolution', 1000, 'BackgroundColor','white');
+exportgraphics(fig1, 'dynamics_per_social_group.pdf', ...
+               'ContentType','vector', 'BackgroundColor','white');
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Figure 2: Infectiousness per Social Group (Summed Over Age Classes) — Publication Ready
 compartments2 = {'A','J','I'};
+cols2 = colors([3, 4, 7], :);   % use your A, J, I colors
 
-figure;
+fig2 = figure; clf;
+set(fig2, 'Units','inches', 'Position',[0.6 0.6 14 10]);
+t2 = tiledlayout(5, 2, 'Padding','compact', 'TileSpacing','compact');
+
+lw_curve = 3.0; lw_axes = 1.6;
+axList2 = gobjects(10,1);
+globalY2 = 0;
+
+hLegend2 = gobjects(numel(compartments2),1);
+
 for g = 1:10
-    % Extract and sum over age groups for each compartment
-
     A = sum(Classes.(['A' num2str(g)]), 2);
     J = sum(Classes.(['J' num2str(g)]), 2);
     I = sum(Classes.(['I' num2str(g)]), 2);
-    % H = sum(Classes.(['H' num2str(g)]), 2);
 
-
-    subplot(5,2,g)
-    plot(t, A, '-', 'LineWidth', 2.5, 'Color', colors(3,:));hold on;
-    plot(t, J, '-', 'LineWidth', 2.5, 'Color', colors(2,:));
-    plot(t, I, '-', 'LineWidth', 2.5, 'Color', colors(7,:));
-    % plot(t, H, '-', 'LineWidth', 2.5, 'Color', colors(6,:));
-
-
-    title(['Decile ' num2str(g)], 'FontWeight', 'bold');
-    xlabel('Time (days)', 'FontSize', 18);
-    ylabel('Population', 'FontSize', 18);
-    grid on;
+    ax = nexttile(t2); axList2(g) = ax; hold(ax, 'on'); box(ax, 'on');
+    set(ax, 'LineWidth', lw_axes, 'TickDir','out', ...
+            'FontSize', 16, 'FontWeight','bold');
 
     if g == 1
-        legend(compartments2, 'Location', 'northeastoutside');
+        hLegend2(1) = plot(t, A, '-', 'LineWidth', lw_curve, 'Color', cols2(1,:));
+        hLegend2(2) = plot(t, J, '-', 'LineWidth', lw_curve, 'Color', cols2(2,:));
+        hLegend2(3) = plot(t, I, '-', 'LineWidth', lw_curve, 'Color', cols2(3,:));
+    else
+        plot(t, A, '-', 'LineWidth', lw_curve, 'Color', cols2(1,:));
+        plot(t, J, '-', 'LineWidth', lw_curve, 'Color', cols2(2,:));
+        plot(t, I, '-', 'LineWidth', lw_curve, 'Color', cols2(3,:));
     end
+
+    title(ax, ['Decile ' num2str(g)], 'FontWeight','bold', 'FontSize', 18);
+    xlabel(ax, 'Time(days)', 'Interpreter','latex', 'FontSize', 22, 'FontWeight','bold');
+    ylabel(ax, 'Population',       'Interpreter','latex', 'FontSize', 22, 'FontWeight','bold');
+
+    grid(ax, 'on'); ax.MinorGridLineStyle = '-'; grid(ax,'minor');
+    set(ax, 'LooseInset', max(get(ax,'TightInset'), 0.02));
+
+    localMax = max([A;J;I], [], 'all');
+    if ~isempty(localMax), globalY2 = max(globalY2, localMax); end
 end
 
-sgtitle('Infectiousness per Social Group (Summed Over Age Classes)', 'FontSize', 14, 'FontWeight', 'bold');
+% Unified Y-limits (+5%)
+if globalY2 > 0
+    yMax2 = ceil(globalY2 * 1.05);
+    arrayfun(@(a) set(a, 'YLim', [0 yMax2]), axList2);
+end
 
+% Shared, boxed legend
+lgd2 = legend(axList2(1), hLegend2, compartments2, ...
+              'Interpreter','latex', 'Orientation','horizontal', ...
+              'NumColumns',3, 'Box','on');
+set(lgd2, 'FontSize', 20, 'EdgeColor','k', 'LineWidth', 2.5);
+lgd2.Layout.Tile = 'south';
+
+
+% Main title
+sgtitle(t2, 'Infectiousness per Social Group (Summed Over Age Classes)', ...
+        'Interpreter','latex', 'FontSize', 26, 'FontWeight','bold');
+
+% Borderless, sharp export
+exportgraphics(fig2, 'infectiousness_per_social_group.png', ...
+               'Resolution', 1000, 'BackgroundColor','white');
+exportgraphics(fig2, 'infectiousness_per_social_group.pdf', ...
+               'ContentType','vector', 'BackgroundColor','white');
 
 
 
