@@ -1,4 +1,4 @@
-%% The code for my PhD Project, this contains the age and social mixing
+  %% The code for my PhD Project, this contains the age and social mixing
 % Using a ODE15s for this analysis. 
 
 %% Input 
@@ -119,7 +119,7 @@ opts = odeset('RelTol',1e-4,'AbsTol',1e-3); %tolerance level%tolerance level
     %% Part 2: Determine current mixing based on time t
 
     ageMix = Mix_H + Mix_S + Mix_W + Mix_O;
-         w = soc;
+    w = soc;
     % if (t > 0) && (t <= 83)
     %      ageMix = Mix_H + Mix_S + Mix_W + Mix_O;
     %      w = soc;
@@ -136,7 +136,7 @@ opts = odeset('RelTol',1e-4,'AbsTol',1e-3); %tolerance level%tolerance level
     %      ageMix = NPIchange(Mix_H, Mix_S, Mix_W, Mix_O, 'RELAXED_RESTRICTION');
     %      w = soc;
     % end
-    % 
+
     % Current mixing matrix
     AgeMat = ageMix .* (para.a .* para.h');
     AS = kron(w, AgeMat);
@@ -190,7 +190,7 @@ opts = odeset('RelTol',1e-4,'AbsTol',1e-3); %tolerance level%tolerance level
           SocInf = SocInf + AgeSoc{i,j} * (J_j +  para.iota *I_j +  A_j);
        end
        % Multiply by S and normalize by group population (para.N{i} should be a column vector of length n)
-       SocInf = SocInf .* (S ./ para.D(i)');
+       SocInf = SocInf .* (S ./ para.D(i,:)');
        
        % Compute beta for group i
        beta_i = para.beta * SocInf;
