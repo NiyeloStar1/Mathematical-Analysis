@@ -118,8 +118,11 @@ opts = odeset('RelTol',1e-4,'AbsTol',1e-3); %tolerance level%tolerance level
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% Part 2: Determine current mixing based on time t
 
+%% No lockdown implementation
     ageMix = Mix_H + Mix_S + Mix_W + Mix_O;
     w = soc;
+
+  %% Lockdown implementation
     % if (t > 0) && (t <= 83)
     %      ageMix = Mix_H + Mix_S + Mix_W + Mix_O;
     %      w = soc;
